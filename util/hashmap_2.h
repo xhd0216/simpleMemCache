@@ -15,8 +15,8 @@ typedef struct ValueListNode node;
 
 typedef int (* hashcode)(void *);
 typedef int (* equals)(void *, void *);
-/*typedef int (* copykey)(void * void **);
-  typedef int (* copyvalue)(void *, void **);*/
+typedef int (* copykey)(void *, void *);
+typedef int (* copyvalue)(void *, void *);
 
 struct HashMap{
   node ** buckets;
@@ -24,8 +24,9 @@ struct HashMap{
   /* pointer to functions */
   hashcode hash_func;
   equals eq_func;
-  /*copykey copy_key;
-    copyvalue copy_value;*/
+  /* should need both: size of key/value and function to copy key/value */
+  copykey copy_key;
+  copyvalue copy_value;
   int key_size;
   int value_size;
 };
@@ -33,8 +34,8 @@ struct HashMap{
 typedef struct HashMap hashmap;
 
 int get_bucket(int, int);
-hashmap * hashmap_init(int, hashcode, equals, int, int);
+hashmap * hashmap_init(int, hashcode, equals, int, int, copykey, copyvalue);
 void * hashmap_get(hashmap *, void * key);
 int hashmap_insert(hashmap *, void * key,  void * value);
 int hashmap_delete(hashmap *, void * key);
-int * hashmap_destroy(hashmap *);
+int hashmap_destroy(hashmap *);
