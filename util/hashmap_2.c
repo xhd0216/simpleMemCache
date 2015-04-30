@@ -17,7 +17,7 @@ int get_bucket(int i, int length){
     r ^= i;
     i = i >> length;
   }
-  return r & ((1<<length) -1);
+  return r & ((1<<(length-1)) -1);
 }
 
 /*
@@ -58,7 +58,9 @@ hashmap * hashmap_init(int size, hashcode hc, equals eq, int ks, int vs, copykey
 void * hashmap_get(hashmap * hm, void * key){
   if(!hm) return NULL;
   int h = hm->hash_func(key);
-  node * temp = hm->buckets[get_bucket(h, MAX_LENGTH_IN_BIT)];
+  int t = get_bucket(h, MAX_LENGTH_IN_BIT);
+  printf("hash code: %d, bucket %d\n", h, t);
+  node * temp = hm->buckets[t];
   while(temp){
     
     if(hm->eq_func(key, temp->pKey) == 1){
@@ -76,20 +78,22 @@ int hashmap_insert(hashmap * hm, void * key, void * value){
   if(!hm) return 0;
   int h = hm->hash_func(key);
   int t = get_bucket(h, MAX_LENGTH_IN_BIT);
-  printf("go to bucket %d\n", t);
+  printf("hash code: %d, bucket %d\n", h, t);
   node * temp = hm->buckets[t];
   node * p = NULL;
   int result;
+  int found = 0;
   while(temp){
     if(hm->eq_func(temp->pKey, key)==1){
-      /* update */
-      //free(temp->pVal); no need to free
-      //temp->pVal = value;
-      return hm->copy_value(temp->pVal, value);
-      //return 1;//hm->cv(value, &(temp->pVal));
+      /* found the key, update */
+      found = 1;
+      break;
     }
     p = temp;
     temp = temp->next;
+  }
+  if(found > 0){
+    return hm->copy_value(temp->pVal, value);
   }
   node * n = (node *) malloc(sizeof(node));
   if(!n) return 0;
@@ -122,13 +126,11 @@ int hashmap_delete(hashmap * hm, void * key){
   node * p = NULL;
   node * n = NULL;
   int result = 0;
+  //write lock here
   while(temp){
     if(hm->eq_func(temp->pKey, key) == 1){
-      /* found, delete it */
-      free(temp->pVal);
-      free(temp->pKey);/* still have trouble with garbage collection */
+      /* found */
       n = temp->next;
-      free(temp);
       result = 1;
       break;
     }
@@ -136,12 +138,18 @@ int hashmap_delete(hashmap * hm, void * key){
     temp = temp->next;
 
   }
-  if(result == 0) return result;
-  if(!p) hm->buckets[t] = n;
-  else{
-    p->next = n;
-    if(n) n->next = p;
+  if(result > 0){
+    if(!p) hm->buckets[t] = n;
+    else{
+      p->next = n;
+      if(n) n->next = p;
+    }
   }
+  //write lock release here
+  if(result == 0) return result;
+  free(temp->pVal);
+  free(temp->pKey);/* still have trouble with garbage collection */
+  free(temp);
   return result;
 }
 
@@ -161,15 +169,9 @@ int hashmap_destroy(hashmap * hm){
       free(n);
       n = temp;
     }
-    //printf("\n");
   }
   free(hm->buckets);
   free(hm);
   return 1;
 
-}
-
-
-int main(){
-  return 0;
 }

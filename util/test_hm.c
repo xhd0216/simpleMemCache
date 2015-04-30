@@ -1,4 +1,4 @@
-#include"hashmap.c"
+#include"hashmap_2.c"
 
 
 struct stype{
@@ -7,6 +7,14 @@ struct stype{
   int no_use;
 };
 typedef struct stype ss;
+
+int KeyTypeCopy(void * k1, void * k2){
+  ss * s1 = (ss *) k1;
+  ss * s2 = (ss *) k2;
+  memcpy(k1, k2, sizeof(ss));
+  return 1;
+
+}
 
 int KeyTypeEqual(void * k1, void * k2){
   ss * s1 = (ss *)k1;
@@ -43,6 +51,13 @@ struct vtype{
 };
 typedef struct vtype vv;
 
+int ValueTypeCopy(void * v1, void * v2){
+  vv * j1 = (vv *) v1;
+  vv * j2 = (vv *) v2;
+  memcpy(v1, v2, sizeof(vv));
+  return 1;
+}
+
 void iterate(hashmap * h){
   if(!h) return;
   node * n;
@@ -54,62 +69,75 @@ void iterate(hashmap * h){
     while(n){
       tempv = (vv*)n->pVal;
       tempk = (ss*)n->pKey;
-      printf("(%d, %d)\t", tempk->v, tempv->j);
+      printf("(%s, %d, %d)\t", tempk->c, tempk->v, tempv->j);
       n = n->next;
     }
     printf("\n");
   }
 }
 
-void helper(hashmap * e){
-  ss a;
-  vv v;
-  strncpy(a.c, "backup", 30);
-  a.v = 15;
-  v.j = 35;
-  /*will cause error: a, v are local/stack variables, 
-   *when function quit, they will be delete
-   *but hashmap still have a pointer pointing to it
-   */
-  hashmap_insert(e, &a, &v, &KeyTypeHash, &KeyTypeEqual);
 
-}
 int main(){
-  hashmap hm;
-  hashmap_init(&hm, 200);
+  hashmap * hm = hashmap_init(200, &KeyTypeHash, &KeyTypeEqual, sizeof(ss), sizeof(vv), &KeyTypeCopy, &ValueTypeCopy);
+  if(!hm){
+    printf("initialization failed\n");
+    return 0;
+
+  }
   printf("initialized\n");
-  ss a;
-  /*ss b;
-  ss c;
-  ss d;*/
-  strncpy(a.c, "hupu", 30);
-  a.v = 10;
-  /* b.c = "kkkkk";
-  b.v = 10;
-  c.c = "hupu";
-  c.v = 10;
-  d.c = "hupus";
-  d.v = 10;*/
-  vv jjj;
-  jjj.j = 100;
-  hashmap_insert(&hm, &a, &jjj, &KeyTypeHash, &KeyTypeEqual);
-  /* hashmap_insert(b, sizeof(ss));
-  hashmap_insert(c, sizeof(ss));
-  hashmap_insert(d, sizeof(ss));*/
-  printf("size of hash map: %d\n",hm.size);
-  iterate(&hm);
-  ss b;
-  strncpy(b.c, "hupu", 30);
-  b.v = 10;
-  vv * hhh;
-  //hhh.j = 90;
-  hhh = (vv*)hashmap_get(&hm, &b, &KeyTypeHash, &KeyTypeEqual);
-  printf("item got: %d\n", hhh->j);
-  hashmap_delete(&hm, &b, &KeyTypeHash, &KeyTypeEqual);
-  iterate(&hm);
-  //helper(&hm);
-  //free(hhh);
-  //iterate(&hm);
+  
+  int choice = 0;
+  while(choice != 5){
+    printf("choose an option:\n1. insert\n2. get\n3. delete\n4. print\n5. quit\n");
+    scanf("%d", &choice);
+    if(choice == 1){
+      ss a;
+      vv b;
+      printf("input key name:");
+      scanf("%29s", a.c);
+      printf("input key data:");
+      scanf("%d", &a.v);
+      printf("input value data:");
+      scanf("%d", &b.j);
+      int r = hashmap_insert(hm, &a, &b);
+      if(r == 1) printf("success!\n");
+      else printf("failure!\n");
+    }
+    else if(choice == 2){
+      ss a;
+      printf("input key name:");
+      scanf("%29s", a.c);
+      printf("input key data:");
+      scanf("%d", &a.v);
+      vv * hh = hashmap_get(hm, &a);
+      if(!hh) printf("did not find entry\n");
+      else{
+	printf("value is %d\n", hh->j);
+      }
+    }
+    else if(choice == 3){
+
+      ss a;
+      printf("input key name:");
+      scanf("%29s", a.c);
+      printf("input key data:");
+      scanf("%d", &a.v);
+      int r = hashmap_delete(hm, &a);
+      if(r == 1) printf("deleted!\n");
+      else{
+	printf("did not find element or delete fail\n");
+      }
+    }
+    else if(choice == 4){
+      iterate(hm);
+    }
+    else if(choice == 5){
+      break;
+    }
+    else printf("invalid input\n");
+  }
+  hashmap_destroy(hm);
+  printf("hash map destroyed\n");
   return 0;
 
 }

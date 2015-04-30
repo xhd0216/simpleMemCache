@@ -24,7 +24,7 @@ struct HashMap{
   /* pointer to functions */
   hashcode hash_func;
   equals eq_func;
-  /* should need both: size of key/value and function to copy key/value */
+  /* should need both: size of key/value and functions to copy key/value */
   copykey copy_key;
   copyvalue copy_value;
   int key_size;
