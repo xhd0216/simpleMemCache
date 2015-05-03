@@ -8,7 +8,7 @@ struct stype{
 };
 typedef struct stype ss;
 
-int KeyTypeCopy(void * k1, void * k2){
+int KeyTypeCopy(void * k1, const void * k2){
   ss * s1 = (ss *) k1;
   ss * s2 = (ss *) k2;
   memcpy(k1, k2, sizeof(ss));
@@ -16,7 +16,7 @@ int KeyTypeCopy(void * k1, void * k2){
 
 }
 
-int KeyTypeEqual(void * k1, void * k2){
+int KeyTypeEqual(const void * k1, const void * k2){
   ss * s1 = (ss *)k1;
   ss * s2 = (ss *)k2;
   if(s1->v != s2->v) return 0;
@@ -33,16 +33,12 @@ int KeyTypeEqual(void * k1, void * k2){
   return 1;
 }
 
-int KeyTypeHash(void * k){
+hash_code_t KeyTypeHash(const void * k){
   ss * s = (ss *) k;
-  int r = s->v;
-  int temp;
-  for(int i = 0; i < 30; i++){
-    if(s->c[i] == '\0') break;
-    temp = ((1<<8)-1) & s->c[i];
-    temp = temp << ((i%4)*8);
-    r ^= temp;
-  }
+  hash_code_t r;
+  memcpy(r.hc, s->c, HASH_CODE_SIZE - sizeof(int));
+  memcpy(r.hc + HASH_CODE_SIZE - sizeof(int), &(s->v), sizeof(int));
+  r.hc[HASH_CODE_SIZE] = '\0';
   return r;
 }
 
@@ -51,10 +47,16 @@ struct vtype{
 };
 typedef struct vtype vv;
 
-int ValueTypeCopy(void * v1, void * v2){
-  vv * j1 = (vv *) v1;
+int ValueTypeCopy(void ** v1, const void * v2){
+  printf("enter Value Type Copy Functino!\n");
+  vv ** j1 = (vv **) v1;
+  vv * j3 = malloc(sizeof(vv *));
+  if(j3 == NULL) return 0;
   vv * j2 = (vv *) v2;
-  memcpy(v1, v2, sizeof(vv));
+  printf("before mem copy...\n");
+  memcpy((j3), j2, sizeof(vv));
+  printf("is this ok??\n");
+  *j1 = j3;
   return 1;
 }
 
@@ -68,17 +70,22 @@ void iterate(hashmap * h){
     n = h->buckets[i];
     while(n){
       tempv = (vv*)n->pVal;
-      tempk = (ss*)n->pKey;
-      printf("(%s, %d, %d)\t", tempk->c, tempk->v, tempv->j);
+      printf("(%s, %d)\t", n->hc.hc, tempv->j);
       n = n->next;
     }
     printf("\n");
   }
 }
 
+int FreeValue(void * v){
+  vv * s = (vv *) v;
+  free(s);
+  return 1;
+}
+
 
 int main(){
-  hashmap * hm = hashmap_init(200, &KeyTypeHash, &KeyTypeEqual, sizeof(ss), sizeof(vv), &KeyTypeCopy, &ValueTypeCopy);
+  hashmap * hm = hashmap_create(200, &KeyTypeHash, &ValueTypeCopy, &FreeValue);
   if(!hm){
     printf("initialization failed\n");
     return 0;
@@ -109,10 +116,11 @@ int main(){
       scanf("%29s", a.c);
       printf("input key data:");
       scanf("%d", &a.v);
-      vv * hh = hashmap_get(hm, &a);
+      node * hh = hashmap_get(hm, &a);
       if(!hh) printf("did not find entry\n");
       else{
-	printf("value is %d\n", hh->j);
+	vv * shh = (vv *)hh->pVal;
+	printf("value is %d\n", shh->j);
       }
     }
     else if(choice == 3){

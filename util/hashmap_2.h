@@ -1,41 +1,43 @@
-#define MAX_LENGTH_IN_BIT 3
-/* max 256 entries in hash map array*/
+#define MAX_BUCKETS 256
+#define INIT_NUM_BUCKETS 16
+#define RESIZE_FACTOR 8
+/* max 256 entries in hash map buckets*/
+/* initially have 16 buckets */
+/* enlarge to 8 times when hashmap_resize is called */
+#define HASH_CODE_SIZE 15
+
+
+struct HashCodeType{
+  char hc [HASH_CODE_SIZE+1];
+};
+typedef struct HashCodeType hash_code_t;
 
 struct ValueListNode{
   void * pVal;
-  void * pKey;
+  hash_code_t hc;//store hash code of the key
   struct ValueListNode * next;
   struct ValueListNode * prev;
 };
 typedef struct ValueListNode node;
 
-
-
-
-
-typedef int (* hashcode)(void *);
-typedef int (* equals)(void *, void *);
-typedef int (* copykey)(void *, void *);
-typedef int (* copyvalue)(void *, void *);
+typedef hash_code_t (* hashcode)(const void *);
+typedef int (* copyvalue)(void **, const void *);
+typedef int (* freevalue)(void *);
 
 struct HashMap{
   node ** buckets;
   int size;
   /* pointer to functions */
   hashcode hash_func;
-  equals eq_func;
-  /* should need both: size of key/value and functions to copy key/value */
-  copykey copy_key;
   copyvalue copy_value;
-  int key_size;
-  int value_size;
+  freevalue free_value;
 };
-
 typedef struct HashMap hashmap;
 
-int get_bucket(int, int);
-hashmap * hashmap_init(int, hashcode, equals, int, int, copykey, copyvalue);
-void * hashmap_get(hashmap *, void * key);
+int get_bucket(hash_code_t *, int);
+hashmap * hashmap_create(int, hashcode, copyvalue, freevalue);
+node * hashmap_get(hashmap *, void * key);/* return the node * */
 int hashmap_insert(hashmap *, void * key,  void * value);
 int hashmap_delete(hashmap *, void * key);
 int hashmap_destroy(hashmap *);
+hashmap * hashmap_resize(hashmap *);
