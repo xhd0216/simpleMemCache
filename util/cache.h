@@ -2,6 +2,34 @@
 #include<pthread.h>
 #define MAX_CACHE_SIZE 1024
 
+
+/*
+ * value_clone_function: clones value to heap
+ * typical use:
+ * struct ValueType{
+ *   char c [30];
+ *   int i;
+ * };
+ * int ValueClone(void ** dest, const void * src){
+ *   *dest = malloc(sizeof(ValueType)); //return a ptr to ValueType
+ *   memcpy(*dest, src, sizeof(ValueType));
+ *   return *dest;
+ * }
+ *
+ * typical use 2:
+ * struct ValueType{
+ *   char * c;
+ *   int i;
+ * };
+ * int ValueClone(void ** dest, const void * src){
+ *   //allocate memory
+ *   *dest = malloc(sizeof(ValueType)); 
+ *   (*dest)->c = malloc(strlen(src->c) + 1);
+ *   strncpy((*dest)->c, src->c, strlen(src->c) + 1);
+ *   (*dest)->i = src->i;
+ *   return *dest;
+ * }
+ */
 typedef int (* cachevalueclone)(void **, const void *);
 typedef int (* cachevaluefree)(void *);
 typedef void * (* getfromothersource)(void **, const void *);
