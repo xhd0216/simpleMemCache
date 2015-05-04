@@ -32,12 +32,15 @@ struct HashMap{
   copyvalue copy_value;
   freevalue free_value;
 };
-typedef struct HashMap hashmap;
+typedef struct HashMap hashmap_2;
 
 int get_bucket(hash_code_t *, int);
-hashmap * hashmap_create(int, hashcode, copyvalue, freevalue);
-node * hashmap_get(hashmap *, void * key);/* return the node * */
-int hashmap_insert(hashmap *, void * key,  void * value);
-int hashmap_delete(hashmap *, void * key);
-int hashmap_destroy(hashmap *);
-hashmap * hashmap_resize(hashmap *);
+hashmap_2 * hashmap_create(int,
+			 hashcode,
+			 copyvalue,
+			 freevalue);
+node * hashmap_get(hashmap_2 *, void * key);/* return the node * */
+node * hashmap_insert(hashmap_2 *, void * key,  void * value);
+int hashmap_delete(hashmap_2 *, void * key);
+int hashmap_destroy(hashmap_2 *);
+hashmap_2 * hashmap_resize(hashmap_2 *);

@@ -36,9 +36,12 @@ int KeyTypeEqual(const void * k1, const void * k2){
 hash_code_t KeyTypeHash(const void * k){
   ss * s = (ss *) k;
   hash_code_t r;
-  memcpy(r.hc, s->c, HASH_CODE_SIZE - sizeof(int));
-  memcpy(r.hc + HASH_CODE_SIZE - sizeof(int), &(s->v), sizeof(int));
-  r.hc[HASH_CODE_SIZE] = '\0';
+  int le = strlen(s->c);
+  int te = s->v;
+  le = le<HASH_CODE_SIZE -sizeof(int)?le:HASH_CODE_SIZE-sizeof(int);
+  memcpy(r.hc, s->c, le);
+  //memcpy(r.hc + HASH_CODE_SIZE - sizeof(int), &(s->v), sizeof(int));
+  r.hc[le] = '\0';
   return r;
 }
 
@@ -85,7 +88,7 @@ int FreeValue(void * v){
 
 
 int main(){
-  hashmap * hm = hashmap_create(200, &KeyTypeHash, &ValueTypeCopy, &FreeValue);
+  hashmap * hm = hashmap_create(INIT_NUM_BUCKETS, &KeyTypeHash, &ValueTypeCopy, &FreeValue);
   if(!hm){
     printf("initialization failed\n");
     return 0;
@@ -95,9 +98,15 @@ int main(){
   
   int choice = 0;
   while(choice != 5){
-    printf("choose an option:\n1. insert\n2. get\n3. delete\n4. print\n5. quit\n");
+    printf("choose an option:\n1. insert\n2. get\n3. delete\n4. print\n5. quit\n6. resize\n");
     scanf("%d", &choice);
-    if(choice == 1){
+    if(choice == 6){
+      printf("current hash map size: %d\n", hm->size);
+      hm = hashmap_resize(hm);
+      printf("new hash map size: %d\n", hm->size);
+      
+    }
+    else if(choice == 1){
       ss a;
       vv b;
       printf("input key name:");
