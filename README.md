@@ -25,5 +25,5 @@ where:
 size is the number of items hold in cache
 key_type_hash_function: a (pointer of) function that hashes a K to hash code (a char array);
 cache_value_clone_function: a (pointer of) function that copies the value to heap;
-cache_value_clone_function: a (pointer of) function that frees a value object in heap;
+cache_value_clone_function: a (pointer of) function that frees a value object in heap; 
 get_from_other_function: a (pointer of) function that, once cache misses, obtains V from other source (e.g., a DB)
