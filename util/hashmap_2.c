@@ -54,7 +54,7 @@ hashmap_2 * hashmap_resize(hashmap_2 * hm){
  * input:
  * length: log(size_of_hash_map)
  */
-int get_bucket(hash_code_t * h, int length){
+int get_bucket( hash_code_t * h,  int length){
   int r = 0;
   for(int i = 0; i < strlen(h->hc); i++){
     r ^= (h->hc[i]<<i);
@@ -78,17 +78,19 @@ hashmap_2 * hashmap_create(int size, hashcode hc, copyvalue cv, freevalue fv){
   hashmap_2 * hm2 = malloc(sizeof(hashmap_2));
   if(!hm2) return hm2;
   if(size > MAX_BUCKETS || size <= 0) size = INIT_NUM_BUCKETS;
-  hm2->buckets = malloc(sizeof(node *) * size);
+  hm2->buckets = malloc(sizeof(node *) * (size+1));
   if(hm2->buckets == NULL){
     free(hm2);
     return NULL;//fail
   }
   hm2->size = size;
-  printf("size in create: %d\n", hm2->size);
-  for(int i = 0; i < hm2->size; i++){
+  printf("hash map size in create: %d\n", hm2->size);
+  for(int i = 0; i < (hm2->size+1); i++){
     hm2->buckets[i] = malloc(sizeof(node *));
     hm2->buckets[i]->next = NULL;
     hm2->buckets[i]->prev = NULL;
+    if(hm2->buckets[i] != NULL)    printf("bucket %d initialized, ", i);
+    if(hm2->buckets[i]->next == NULL) printf("correctly\n");
   }
   hm2->hash_func = hc;
   hm2->copy_value = cv;
@@ -101,7 +103,7 @@ node * hashmap_get(hashmap_2 * hm, void * key){
   if(!hm) return NULL;
   hash_code_t h = hm->hash_func(key);
   int t = get_bucket(&h, hm->size);
-  printf("hash code: %s, bucket %d\n", h.hc, t);
+  //printf("hashmap_get: hash code: %s, bucket %d\n", h.hc, t);
   node * temp = hm->buckets[t]->next;
   while(temp){
     if(hc_compare(&h, &(temp->hc)) == 0){
@@ -118,19 +120,26 @@ node * hashmap_get(hashmap_2 * hm, void * key){
 node * hashmap_insert(hashmap_2 * hm, void * key, void * value){
   node * tmp = hashmap_get(hm, key);
   if(tmp != NULL){
-    printf("found matched key...\n");
     hm->free_value(tmp->pVal);
-    hm->copy_value(&(tmp->pVal), value);
+    tmp->pVal = hm->copy_value(value);
+    //int a = hm->copy_value(&(tmp->pVal), value);
+    //if(a == 0) printf("failed to allocate mem\n");
     return tmp;
   }
-  printf("didn't find matched key, create new one\n");
   node * n = malloc(sizeof(node));
-  if(!n) return 0;
-  int res = hm->copy_value(&(n->pVal), value);
-  if(res != 1){
+  if(!n) return NULL;
+  n->pVal = hm->copy_value(value);
+  if(n->pVal == NULL){
     free(n);
     return NULL;
   }
+  /*
+    int res = hm->copy_value(&(n->pVal), value);
+    if(res != 1){
+    free(n);
+    return NULL;
+    }
+  */
   n->hc = hm->hash_func(key);
   int t = get_bucket(&(n->hc), hm->size);
   node * th = hm->buckets[t]->next;

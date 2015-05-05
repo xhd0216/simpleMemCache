@@ -21,7 +21,8 @@ struct ValueListNode{
 typedef struct ValueListNode node;
 
 typedef hash_code_t (* hashcode)(const void *);
-typedef int (* copyvalue)(void **, const void *);
+//typedef int (* copyvalue)(void **, const void *);
+typedef void * (* copyvalue)(const void *);
 typedef int (* freevalue)(void *);
 
 struct HashMap{

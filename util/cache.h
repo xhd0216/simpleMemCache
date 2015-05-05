@@ -30,9 +30,10 @@
  *   return *dest;
  * }
  */
-typedef int (* cachevalueclone)(void **, const void *);
+typedef void * (* cachevalueclone)(const void *);
 typedef int (* cachevaluefree)(void *);
-typedef void * (* getfromothersource)(void **, const void *);
+//typedef void * (* getfromothersource)(void **, const void *);
+typedef void * (* getfromothersource)(const void *);
 typedef int index_type;
 
 struct RandomReplacementCache{
@@ -47,8 +48,9 @@ struct RandomReplacementCache{
   getfromothersource get_from_other;
 };
 typedef struct RandomReplacementCache cache;
+typedef cache cache_t;
 
-
+pthread_mutex_t hardlock;
 
 
 cache * cache_create(int size,
