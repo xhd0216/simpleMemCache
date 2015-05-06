@@ -40,8 +40,8 @@ hashmap_2 * hashmap_create(int,
 			 hashcode,
 			 copyvalue,
 			 freevalue);
-node * hashmap_get(hashmap_2 *, void * key);/* return the node * */
-node * hashmap_insert(hashmap_2 *, void * key,  void * value);
-int hashmap_delete(hashmap_2 *, void * key);
+node * hashmap_get(hashmap_2 *, const void * key);/* return the node * */
+node * hashmap_insert(hashmap_2 *, const void * key,  void * value);
+int hashmap_delete(hashmap_2 *, const void * key);
 int hashmap_destroy(hashmap_2 *);
 hashmap_2 * hashmap_resize(hashmap_2 *);

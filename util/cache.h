@@ -61,6 +61,6 @@ cache * cache_create(int size,
 void * cache_get(cache * ca,
 		 void * key);
 int  cache_set(cache * ca,
-		void * key,
-		void * value);
+	       const void * key,
+	       const void * value);
 int cache_destroy(cache * ca);

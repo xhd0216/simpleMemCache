@@ -99,7 +99,7 @@ hashmap_2 * hashmap_create(int size, hashcode hc, copyvalue cv, freevalue fv){
 }
 
 
-node * hashmap_get(hashmap_2 * hm, void * key){
+node * hashmap_get(hashmap_2 * hm, const void * key){
   if(!hm) return NULL;
   hash_code_t h = hm->hash_func(key);
   int t = get_bucket(&h, hm->size);
@@ -117,7 +117,7 @@ node * hashmap_get(hashmap_2 * hm, void * key){
 
 
 
-node * hashmap_insert(hashmap_2 * hm, void * key, void * value){
+node * hashmap_insert(hashmap_2 * hm, const void * key, void * value){
   node * tmp = hashmap_get(hm, key);
   if(tmp != NULL){
     hm->free_value(tmp->pVal);
@@ -133,13 +133,6 @@ node * hashmap_insert(hashmap_2 * hm, void * key, void * value){
     free(n);
     return NULL;
   }
-  /*
-    int res = hm->copy_value(&(n->pVal), value);
-    if(res != 1){
-    free(n);
-    return NULL;
-    }
-  */
   n->hc = hm->hash_func(key);
   int t = get_bucket(&(n->hc), hm->size);
   node * th = hm->buckets[t]->next;
@@ -150,7 +143,7 @@ node * hashmap_insert(hashmap_2 * hm, void * key, void * value){
   return n;  
 }
 
-int hashmap_delete(hashmap_2 * hm, void * key){
+int hashmap_delete(hashmap_2 * hm, const void * key){
   node * tmp = hashmap_get(hm, key);
   if(tmp == NULL){
     printf("no match item");

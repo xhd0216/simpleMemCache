@@ -79,9 +79,9 @@ void * GetCache(void * avoid){
   value_t * t;
   printf("enter thread %d, key = %c\n", index, key.c);
   for(int j = 0; j < LOOP_TIMES; j++){
-    pthread_mutex_lock(&lk);
+    //pthread_mutex_lock(&lk);
     r = cache_get(a->caa, &key);
-    pthread_mutex_unlock(&lk);
+    //pthread_mutex_unlock(&lk);
     t = (value_t *) r;
     if(t != NULL){
       printf("thread %d, times=%d, key %c, value %c\n", index, j, key.c, t->c);

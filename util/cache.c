@@ -88,6 +88,7 @@ void * cache_get(cache * ca,
   index_type * i;
   int found = 0;
   pthread_rwlock_rdlock(&(ca->lock));
+  //pthread_mutex_lock(&hardlock);
   node * ip = hashmap_get(ca->hm, key);
   if(ip != NULL){
     i = (index_type *) (ip->pVal);
@@ -95,6 +96,7 @@ void * cache_get(cache * ca,
     found = 1;
   }
   pthread_rwlock_unlock(&(ca->lock));
+  //pthread_mutex_unlock(&hardlock);
   if(found == 1){
     printf("cache hit in cache array, index %d!\n", *i);
     return res;
@@ -103,80 +105,89 @@ void * cache_get(cache * ca,
     printf("cache miss.\n");
     
     void * r = ca->get_from_other(key);
-    printf("got from others\n");
     if(r == NULL){/*failed*/
+      printf("failed: get_from_other\n");
       return NULL;
     }
     else{
-      //pthread_rwlock_wrlock(&(ca->lock));
-      pthread_mutex_lock(&hardlock);
+      pthread_rwlock_wrlock(&(ca->lock));
+      //pthread_mutex_lock(&hardlock);
       /* 
        * if fail to insert,
        * still return *res, the value return by get_from_other() 
        */
-      printf("going to set cache_value\n");
       cache_set(ca, key, r);
-      //pthread_rwlock_unlock(&(ca->lock));
-      pthread_mutex_unlock(&hardlock);
+      pthread_rwlock_unlock(&(ca->lock));
+      //pthread_mutex_unlock(&hardlock);
       return r;
     }
   }
 }
-int  cache_set(cache * ca,
-		void * key,
-		void * value){
-  /*create new entry*/
+
+int cache_set(cache * ca,
+	      const void * key,
+	      const void * value){
+  hashmap_delete(ca->hm, key);
+  int f = ca->current_pos;
+  node * new_entry = hashmap_insert(ca->hm, key, &(f));
+  void * r = ca->cache_value_clone(value);
+  ca->items[f] = r;
+  ca->index_to_hashmap_2[f] = new_entry;
+  ca->current_pos = (f + 1) % ca->size;
+  
+  return 1;
+}
+
+
+/*int  cache_set(cache * ca,
+	       const void * key,
+	       const void * value){
   index_type * ti = malloc(sizeof(index_type));
   *ti = ca->current_pos;
+  node * tmp = ca->index_to_hashmap_2[*ti];
   node * new_entry = hashmap_insert(ca->hm, key, (void *)ti);
+  
   if(new_entry == NULL){
     printf("failed to insert new entry!\n");
     return 0;
   }
+  ca->index_to_hashmap_2[ca->current_pos] = new_entry;
+  void * tu =  ca->cache_value_clone(value);
+  if(tu == NULL){
+    printf("failed to copy cache value\n");
+    return 0;
+  }
+  ca->items[ca->current_pos] = tu;
+  if(ca->current_pos != *(index_type *)new_entry->pVal){
+    printf("problems here!\n");
+  }
+  ca->current_pos++;
+  if(ca->current_pos >= ca->size){
+    ca->current_pos = 0;
+  }
+  else if(tmp == new_entry){
+    printf("it was an update\n");
+    return 1;
+  }
   else{
-    /*delete old entry*/
-    printf("current position is %d\n", ca->current_pos);
-    node * tmp = ca->index_to_hashmap_2[*ti];
-    if(tmp == new_entry){
-      /*this means new_entry = hashmap_insert was an update*/
-      /*no need to delete old one*/
-      printf("it was an update\n");
-      return 1;
-    }
     if(tmp != NULL){
       tmp->prev->next = tmp->next;
       if(tmp->next != NULL) tmp->next->prev = tmp->prev;
       index_type * aa = (index_type *)(tmp->pVal);
       printf("to delete this entry: %d, current position: %d\n", *aa, *ti);
-      if(*aa == *ti && *ti == ca->current_pos){
+      if(*aa == *ti){
 	if(tmp->pVal != NULL){
-	  //free_int((tmp->pVal));
 	  ca->hm->free_value(tmp->pVal);
 	}
 	free(tmp);
       }
       else{
-	printf("error here! different pos %d, %d, %d\n", *aa, *ti, ca->current_pos);
-
+	printf("error here! different pos %d, %d\n", *aa, *ti);
       }
     }
-    ca->index_to_hashmap_2[ca->current_pos] = new_entry;
-    void * tu =  ca->cache_value_clone( value);
-    if(tu == NULL){
-      printf("failed to copy cache value\n");
-      return 0;
-    }
-    ca->items[ca->current_pos] = tu;
-    if(ca->current_pos != *(index_type *)new_entry->pVal){
-      printf("problems here!\n");
-    }
-    ca->current_pos++;
-    if(ca->current_pos >= ca->size){
-      ca->current_pos = 0;
-    }
+    return 1;
   }
-  return 1;
-}
+  }*/
 int cache_destroy(cache * ca){
   hashmap_destroy(ca->hm);
   for(int i = 0; i < ca->size; i++){
